@@ -1,21 +1,11 @@
-USE test;
-DROP TABLE auto;
-CREATE TABLE auto (pid int, name varchar(20), price float);
---;
-insert into auto values(1, 'Gizmo', 19.99);
-INSERT INTO auto values(2, 'PowerGizmo', 29.99);
-INSERT INTO auto values(3, 'SingleTouch', 149.99);
-INSERT INTO auto values(4, 'MultiTouch', 199.99);
-INSERT INTO auto values(5, 'SuperGizmo', 49.99);
---;
-SELECT * FROM auto;
---;
-DELETE FROM auto 
-WHERE name = "Gizmo";
---;
-DELETE FROM auto 
-WHERE price > 150;
---;
-SELECT * FROM auto;
---;
-.EXIT;
+CREATE DATABASE CS457_PA2;
+USE CS457_PA2;
+CREATE TABLE Product (pid int, name varchar(20), price float);
+insert into Product values(1,	'Gizmo',      	19.99);
+insert into Product values(2,	'PowerGizmo', 	29.99);
+insert into Product values(3,	'SingleTouch', 	149.99);
+insert into Product values(4,	'MultiTouch', 	199.99);
+insert into Product values(5,	'SuperGizmo', 	49.99);
+select * from Product;
+update Product set name = 'Gizmo' where name = 'SuperGizmo';
+select * from Product;
