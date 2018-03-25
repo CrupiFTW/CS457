@@ -14,7 +14,7 @@ The program uses a series of "if" and "elif" statements to decide how to handle 
 
 It does some basic error checking to ensure a database is actually selected when trying to select a table or use the database, the paths exist before trying to modify something in them, and exiting the program elegantly.
 
-The script only imports "OS" for modifying files within different selected paths.
+The script imports "OS" for modifying files within different selected paths and it imports "RE" for...
 
 If a command is not entered properly, it will omit that command and allow you to continue entering commands rather than terminating. A proper command must have a ";" to terminate it, unless it's a comment.
 
