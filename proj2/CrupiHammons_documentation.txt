@@ -20,3 +20,6 @@ The script normalizes input by setting each command to uppercase when deciding w
 
 LIBRARIES:
 The script imports "OS" for modifying files within different selected paths. In addition, it imports "RE" to handle the case-insensitive nature of SQL.
+
+EXECUTION:
+Type "python CrupiHammons_proj2.py" into a Linux terminal, assuming Python is installed on the machine running the script.
