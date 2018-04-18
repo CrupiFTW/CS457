@@ -11,47 +11,49 @@ workingDirectory = ""
 def main():
     try:
         while True:
-            input = ""
-            while not ";" in input and not "--" in input:
-                input += raw_input("\n enter a command \n").strip('\r')  #Read input command from terminal
-                input = input.split(";")[0]  #Remove ; from the input command
-                inputString = str(input)  #Normalize the input command
-                inputString = inputString.upper()
+            clInput = ""
+            while not ";" in clInput and not "--" in clInput:
+                clInput += raw_input("\n enter a command \n").strip('\r')  #Read clInput command from terminal
+            clInput = clInput.split(";")[0]  #Remove ; from the clInput command
+            inputString = str(clInput)  #Normalize the clInput command
+            inputString = inputString.upper()
 
-            if "--" in input:  #Pass the comments
+            print inputString
+
+            if "--" in clInput:  #Pass the comments
                 pass
 
             elif "ALTER TABLE" in inputString:
-                alterTable(input)
+                alterTable(clInput)
 
             elif "CREATE DATABASE" in inputString:
-                createDatabase(input)
+                createDatabase(clInput)
 
             elif "CREATE TABLE" in inputString:
-                createTable(input)
+                createTable(clInput)
 
             elif "DELETE FROM" in inputString:
-                deleteFrom(input)
+                deleteFrom(clInput)
 
             elif "DROP DATABASE" in inputString:
-                dropDatabase(input)
+                dropDatabase(clInput)
 
             elif "DROP TABLE" in inputString:
-                dropTable(input)
+                dropTable(clInput)
 
             elif "INSERT INTO" in inputString:
-                insertInto(input)
+                insertInto(clInput)
 
             elif "SELECT" in inputString:
-                selectInput(input, inputString)
+                selectInput(clInput, inputString)
 
             elif "UPDATE" in inputString:
-                updateFrom(input)
+                updateFrom(clInput)
 
             elif "USE" in inputString:
-                useDatabase(input)
+                useDatabase(clInput)
 
-            elif ".EXIT" in input:  #Exit database if specified before EOF
+            elif ".EXIT" in clInput:  #Exit database if specified before EOF
                 print "All done."
                 exit()
 
@@ -211,16 +213,16 @@ def where(argumentToFind, action, data, up_val=""):
 
 #Secondary Functions
 
-def alterTable(input):
+def alterTable(clInput):
     try:
         useEnabled()  # Check that a database is selected
-        tableName = input.split("ALTER TABLE ")[1]
+        tableName = clInput.split("ALTER TABLE ")[1]
         tableName = tableName.split(" ")[0].lower()
         fileName = os.path.join(workingDirectory, tableName)
         if os.path.isfile(fileName):
-            if "ADD" in input:  # Only checks for during first project
+            if "ADD" in clInput:  # Only checks for during first project
                 with open(fileName, "a") as table:  # Use A to append data to end of the file
-                    additionalString = input.split("ADD ")[1]
+                    additionalString = clInput.split("ADD ")[1]
                     table.write(" | " + additionalString)
                     print "Table " + tableName + " modified."
         else:
@@ -230,9 +232,9 @@ def alterTable(input):
     except ValueError as err:
         print err.args[0]
 
-def createDatabase(input):
+def createDatabase(clInput):
     try:
-        directory = input.split("CREATE DATABASE ")[1]  # Store the string after CREATE DATABASE
+        directory = clInput.split("CREATE DATABASE ")[1]  # Store the string after CREATE DATABASE
         if not os.path.exists(directory):  # Only create it if it doesn't exist
             os.makedirs(directory)
             print "Database " + directory + " created."
@@ -241,18 +243,18 @@ def createDatabase(input):
     except IndexError:
         print "!Failed to create database because no database name specified"
 
-def createTable(input):
+def createTable(clInput):
     try:
         useEnabled()  # Check that database is enabled and selected
-        sub_dir = re.split("CREATE TABLE ", input, flags=re.IGNORECASE)[1]  # Get a string to use for the table name
+        sub_dir = re.split("CREATE TABLE ", clInput, flags=re.IGNORECASE)[1]  # Get a string to use for the table name
         sub_dir = sub_dir.split("(")[0].lower()
         fileName = os.path.join(workingDirectory, sub_dir)
         if not os.path.isfile(fileName):
             with open(fileName, "w") as table:  # Create a file within folder to act as a table
                 print "Table " + sub_dir + " created."
-                if "(" in input:  # Check for the start of argument section
+                if "(" in clInput:  # Check for the start of argument section
                     out = []  # Create a list for output to file
-                    data = input.split("(", 1)[1]  # Remove (
+                    data = clInput.split("(", 1)[1]  # Remove (
                     data = data[:-1]  # Remove )
                     counter = data.count(",")  # Count num of table arguments
                     for x in range(counter + 1):
@@ -266,16 +268,16 @@ def createTable(input):
     except ValueError as err:
         print err.args[0]
 
-def deleteFrom(input):
+def deleteFrom(clInput):
     try:
         useEnabled()  # Check that a database is selected
-        tableName = re.split("DELETE FROM ", input, flags=re.IGNORECASE)[1]  # Get a string to use for the table name
+        tableName = re.split("DELETE FROM ", clInput, flags=re.IGNORECASE)[1]  # Get a string to use for the table name
         tableName = tableName.split(" ")[0].lower()
         fileName = os.path.join(workingDirectory, tableName)
         if os.path.isfile(fileName):
             with open(fileName, "r+") as table:
                 data = table.readlines()
-                delete_item = re.split("WHERE ", input, flags=re.IGNORECASE)[1]
+                delete_item = re.split("WHERE ", clInput, flags=re.IGNORECASE)[1]
                 counter, out = where(delete_item, "delete", data)
                 table.seek(0)
                 table.truncate()
@@ -292,9 +294,9 @@ def deleteFrom(input):
     except ValueError as err:
         print err.args[0]
 
-def dropDatabase(input):
+def dropDatabase(clInput):
     try:
-        directory = input.split("DROP DATABASE ")[1]  # Save string after DROP DATABASE
+        directory = clInput.split("DROP DATABASE ")[1]  # Save string after DROP DATABASE
         if os.path.exists(directory):  # Check db already exists, otherwise can't delete
             for remove_val in os.listdir(directory):  # Empty and remove folder
                 os.remove(directory + "/" + remove_val)
@@ -305,10 +307,10 @@ def dropDatabase(input):
     except IndexError:
         print "!No database name specified"
 
-def dropTable(input):
+def dropTable(clInput):
     try:
         useEnabled()  # Check that a database is selected
-        sub_dir = input.split("DROP TABLE ")[1].lower()  # Get string to use for the table name
+        sub_dir = clInput.split("DROP TABLE ")[1].lower()  # Get string to use for the table name
         path_to_table = os.path.join(workingDirectory, sub_dir)
         if os.path.isfile(path_to_table):
             os.remove(path_to_table)
@@ -320,16 +322,16 @@ def dropTable(input):
     except ValueError as err:
         print err.args[0]
 
-def insertInto(input):
+def insertInto(clInput):
     try:
         useEnabled()  # Check database is enabled and selected
-        tableName = input.split(" ")[2].lower()  # Get table name
+        tableName = clInput.split(" ")[2].lower()  # Get table name
         fileName = os.path.join(workingDirectory, tableName)
         if os.path.isfile(fileName):
-            if "values" in input:  # Check for start of argument section
+            if "values" in clInput:  # Check for start of argument section
                 with open(fileName, "a") as table:  # Open the file to insert into
                     out = []  # Create list for output to file
-                    data = input.split("(", 1)[1]  # Remove (
+                    data = clInput.split("(", 1)[1]  # Remove (
                     data = data[:-1]  # Remove )
                     counter = data.count(",")  # Count argument number
                     for x in range(counter + 1):
@@ -349,7 +351,7 @@ def insertInto(input):
     except ValueError as err:
         print err.args[0]
 
-def selectIn(input, inputUp):
+def selectInput(clInput, inputUp):
     try:
         tableVariables = []
         fileNames = []
@@ -357,7 +359,7 @@ def selectIn(input, inputUp):
 
         useEnabled()  #Check that a database is selected
 
-        (fileNames, tableVariables, joinType) = selectHelper(fileNames, tableVariables, joinType, inputUp, input);
+        (fileNames, tableVariables, joinType) = selectHelper(fileNames, tableVariables, joinType, inputUp, clInput);
         output = ""
 
 #File Management
@@ -371,11 +373,11 @@ def selectIn(input, inputUp):
                 for table in tables:
                     data = table.readlines()
                     dataArray.append(data)
-                toJoinOn = re.split("on", input, flags=re.IGNORECASE)[1]
+                toJoinOn = re.split("on", clInput, flags=re.IGNORECASE)[1]
                 counter, output = joinWhere(toJoinOn, tableVariables, dataArray, joinType)
             #Using the WHERE to find the matches with all attributes
             elif "WHERE" in inputUp:
-                searchItem = re.split("WHERE ", input, flags=re.IGNORECASE)[1]
+                searchItem = re.split("WHERE ", clInput, flags=re.IGNORECASE)[1]
                 counter = 0
                 if len(tables) == 1: #Typical where behavior
                     data = tables[0].readlines()
@@ -400,7 +402,7 @@ def selectIn(input, inputUp):
 
             #If doesnt want all attributes, trim down output
             else:
-                arguments = re.split("SELECT", input, flags=re.IGNORECASE)[1]
+                arguments = re.split("SELECT", clInput, flags=re.IGNORECASE)[1]
                 attributes = re.split("FROM", arguments, flags=re.IGNORECASE)[0]
                 attributes = attributes.split(",")
                 if not output == "":  # Checks if the output is allocated
@@ -423,8 +425,8 @@ def selectIn(input, inputUp):
     except ValueError as err:
         print err.args[0]
 
-def joinOn(input,inputUp):
-    toJoinOn = re.split("on", input, flags=re.IGNORECASE)[1]
+def joinOn(clInput,inputUp):
+    toJoinOn = re.split("on", clInput, flags=re.IGNORECASE)[1]
 
     if "INNER" in inputUp:
         return joinWhere(searchItem, tableVariables, dataArray)
@@ -438,17 +440,17 @@ def joinOn(input,inputUp):
         elif "RIGHT" in inputUp:
             counter, out = where(toJoinOn, "SELECT", data)
 
-def updateFrom(input):
+def updateFrom(clInput):
     try:
         useEnabled()  #Check that a database is selected
-        tableName = re.split("UPDATE ", input, flags=re.IGNORECASE)[1]  #Get string to use for the table name
+        tableName = re.split("UPDATE ", clInput, flags=re.IGNORECASE)[1]  #Get string to use for the table name
         tableName = re.split("SET", tableName, flags=re.IGNORECASE)[0].lower().strip()
         fileName = os.path.join(workingDirectory, tableName)
         if os.path.isfile(fileName):
             with open(fileName, "r+") as table:
                 data = table.readlines()
-                update_item = re.split("WHERE ", input, flags=re.IGNORECASE)[1]
-                val = re.split("SET ", input, flags=re.IGNORECASE)[1]
+                update_item = re.split("WHERE ", clInput, flags=re.IGNORECASE)[1]
+                val = re.split("SET ", clInput, flags=re.IGNORECASE)[1]
                 val = re.split("WHERE ", val, flags=re.IGNORECASE)[0]
                 counter, out = where(update_item, "update", data, val)
                 table.seek(0)
@@ -468,10 +470,10 @@ def updateFrom(input):
     except ValueError as err:
         print err.args[0]
 
-def useDatabase(input):
+def useDatabase(clInput):
     try:
         global globalScopeDirectory
-        globalScopeDirectory = input.split("USE ")[1]  # Store the string after USE (with global scope)
+        globalScopeDirectory = clInput.split("USE ")[1]  # Store the string after USE (with global scope)
         if os.path.exists(globalScopeDirectory):
             print "Using database " + globalScopeDirectory + " ."
         else:
@@ -481,14 +483,14 @@ def useDatabase(input):
     except ValueError as err:
         print err.args[0]
 
-def selectHelper(fileNames, tableVariables, joinType, inputUp, input):
+def selectHelper(fileNames, tableVariables, joinType, inputUp, clInput):
     tableArray = []
     table_lookup = {}
     tableNames = []
 
 #TableName Parsing
     if "JOIN" in inputUp:
-        trimmed_input = re.split("FROM ", input, flags =re.IGNORECASE)[1]
+        trimmed_input = re.split("FROM ", clInput, flags =re.IGNORECASE)[1]
         #The left table will always be [0]
 
         if "LEFT" in inputUp:
@@ -517,11 +519,11 @@ def selectHelper(fileNames, tableVariables, joinType, inputUp, input):
             joinType = 'right'
         
     elif "WHERE" in inputUp:
-        tableNames = re.split("FROM ", input, flags=re.IGNORECASE)[1].lower()
+        tableNames = re.split("FROM ", clInput, flags=re.IGNORECASE)[1].lower()
         tableNames = re.split("WHERE", tableNames, flags=re.IGNORECASE)[0]
 
     else: #if not join or where
-        tableNames = re.split("FROM ", input, flags=re.IGNORECASE)[1].lower()  # Get string to use for the table name
+        tableNames = re.split("FROM ", clInput, flags=re.IGNORECASE)[1].lower()  # Get string to use for the table name
         if "," in tableNames:
             for table in re.split(", ", tableNames):
                 tableArray.append(table)
