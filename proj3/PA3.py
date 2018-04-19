@@ -1,5 +1,5 @@
 """
-Paul Marshall and Phoebe Argon
+Authors
 Database Project 2
 CS 457 -- UNR
 3/27/18

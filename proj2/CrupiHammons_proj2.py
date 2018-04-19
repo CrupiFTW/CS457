@@ -15,8 +15,8 @@ def main():
                 input += raw_input("\n enter a command \n")  #Read the input command from terminal
 
             input = input.split(";")[0]  #Remove ; from the input command
-            inputUp = str(input)  #Normalize the input command
-            inputUp = inputUp.upper()
+            input_string = str(input)  #Normalize the input command
+            input_string = input_string.upper()
 
             if "--" in input:  #Pass the comments
                 pass
