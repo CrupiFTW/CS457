@@ -1,24 +1,42 @@
 '''
-Created by Alex Crupi and Chase Hammons, 4/15/18, version 3
+Created by Alex Crupi and Chase Hammons, 5/2/18, version 4
 '''
 
 import os, re
 from contextlib import contextmanager #needed for multiple file opening
 
-globalScopeDirectory = ""
-workingDirectory = ""
-
 def main():
+    globalScopeDirectory = ""
+    workingDirectory = ""
+    lockArray = ["table"]
+    lockFlag = 0
+    lockIndex = 1
+
     try:
         while True:
             clInput = ""
-            while not ";" in clInput and not "--" in clInput:
-                clInput += raw_input("\n enter a command \n").strip('\r')  #Read clInput command from terminal
-            clInput = clInput.split(";")[0]  #Remove ; from the clInput command
+            #print lockArray, lockFlag
+            if lockFlag is 1:
+                if lockIndex is not len(lockArray):
+                    clInput = lockArray[lockIndex]
+                    lockIndex += 1
+                else:
+                    toRemove = "./locks/" + lockArray[0]
+                    if os.path.isfile(toRemove):
+                        os.remove(toRemove)
+                    lockArray = ["table"]
+                    lockIndex = 1
+                    lockFlag = 0
+
+            if lockFlag is not 1:
+                while not ";" in clInput and not "--" in clInput:
+                    clInput += raw_input("\n enter a command \n").strip('\r')  #Read clInput command from terminal
+                clInput = clInput.split(";")[0]  #Remove ; from the clInput command
+
             inputString = str(clInput)  #Normalize the clInput command
             inputString = inputString.upper()
 
-            print inputString
+            #print inputString
 
             if "--" in clInput:  #Pass the comments
                 pass
@@ -52,6 +70,9 @@ def main():
 
             elif "USE" in inputString:
                 useDatabase(clInput)
+
+            elif "BEGIN TRANSACTION" in inputString:
+                lockArray, lockFlag = transaction(lockArray, lockFlag)
 
             elif ".EXIT" in clInput:  #Exit database if specified before EOF
                 print "All done."
@@ -178,6 +199,7 @@ def where(argumentToFind, action, data, up_val=""):
                         out.append(inputData[inputData.index(line)])
                     if action == "update":
                         attribute, field = up_val.split(" = ")
+                        print attribute, field
                         if attribute in attr_name:
                             sep_line = splitLines(line)
                             sep_line[attr_name.index(attribute)] = field.strip().strip("'")
@@ -442,6 +464,7 @@ def joinOn(clInput,inputUp):
 
 def updateFrom(clInput):
     try:
+        print "DEBUG", clInput
         useEnabled()  #Check that a database is selected
         tableName = re.split("UPDATE ", clInput, flags=re.IGNORECASE)[1]  #Get string to use for the table name
         tableName = re.split("SET", tableName, flags=re.IGNORECASE)[0].lower().strip()
@@ -449,6 +472,7 @@ def updateFrom(clInput):
         if os.path.isfile(fileName):
             with open(fileName, "r+") as table:
                 data = table.readlines()
+                print data
                 update_item = re.split("WHERE ", clInput, flags=re.IGNORECASE)[1]
                 val = re.split("SET ", clInput, flags=re.IGNORECASE)[1]
                 val = re.split("WHERE ", val, flags=re.IGNORECASE)[0]
@@ -550,6 +574,47 @@ def selectHelper(fileNames, tableVariables, joinType, inputUp, clInput):
             fileNames.append(os.path.join(workingDirectory, tableName))
 
     return fileNames, tableVariables, joinType
+
+def transaction(lockArray, lockFlag):
+
+    try:
+        useEnabled()  #Check that a database is selected
+
+        while True:
+            clInput = ""
+
+            while not ";" in clInput and not "--" in clInput:
+                clInput += raw_input("\n enter a command \n").strip('\r')  #Read clInput command from terminal
+
+            if "commit;" in clInput:
+                break
+
+            clInput = clInput.split(";")[0]  #Remove ; from the clInput command
+            inputString = str(clInput)  #Normalize the clInput command
+
+            lockArray.append(inputString)
+
+        tableName = re.split("UPDATE ", lockArray[1], flags=re.IGNORECASE)[1]  #Get string to use for the table name
+        tableName = re.split("SET", tableName, flags=re.IGNORECASE)[0].lower().strip()
+        fileName = tableName + ".lock"
+        files = os.listdir("./locks")
+        lockArray[0] = fileName
+
+        if fileName in files:
+            print "Error: Table", tableName, "is locked!"
+            return ["table"], 0
+        else:
+            path = "./locks/" + fileName
+            f = open(path, "w")
+            f.close()
+            lockFlag = 1
+
+        return lockArray, lockFlag
+
+    except IndexError:
+        print "!Something went wrong in 'transaction'"
+    except ValueError as err:
+        print err.args[0]
 
 def commitHelper(table):
     lockFiles = os.listdir();
