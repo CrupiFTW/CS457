@@ -13,6 +13,9 @@ def main():
     lockIndex = 1
 
     try:
+        if not os.path.exists("./locks"):  # Only create it if it doesn't exist
+            os.makedirs("./locks")
+
         while True:
             clInput = ""
             #print lockArray, lockFlag
@@ -99,7 +102,7 @@ def useEnabled():  #Catch the error when a database hasn't been enabled
         workingDirectory = os.path.join(os.getcwd(), globalScopeDirectory)
 
 def returnColIndex(data):
-    colIndex = data.split(" | ")
+    colIndex = data[0].split(" | ")
     for x in range(len(colIndex)):
         colIndex[x] = colIndex[x].split(" ")[0]
     return colIndex
@@ -373,75 +376,51 @@ def insertInto(clInput):
     except ValueError as err:
         print err.args[0]
 
-def selectInput(clInput, inputUp):
+def selectInput(input, inputUp):
     try:
-        tableVariables = []
-        fileNames = []
-        joinType = ""
-
         useEnabled()  #Check that a database is selected
-
-        (fileNames, tableVariables, joinType) = selectHelper(fileNames, tableVariables, joinType, inputUp, clInput);
+        tableName = re.split("FROM ", input, flags=re.IGNORECASE)[1].lower()  #Get string to use for the table name
+        if "WHERE" in inputUp:
+            tableName = re.split("WHERE", tableName, flags=re.IGNORECASE)[0]
+            if " " in tableName:
+                tableName = tableName.split(" ")[0]
+        fileName = os.path.join(workingDirectory, tableName)
         output = ""
-
-#File Management
-
-        with MultiFileManager(fileNames, "r+") as tables:
-            data = []
-            dataArray = []
-
-#Selection
-            if "JOIN" in inputUp:
-                for table in tables:
+        if os.path.isfile(fileName):
+            with open(fileName, "r+") as table:  #Since there should already be tables created, use r+
+                if "WHERE" in inputUp: #Using the where to find the matches with all attributes
+                    itemToFind = re.split("WHERE ", input, flags=re.IGNORECASE)[1]
                     data = table.readlines()
-                    dataArray.append(data)
-                toJoinOn = re.split("on", clInput, flags=re.IGNORECASE)[1]
-                counter, output = joinWhere(toJoinOn, tableVariables, dataArray, joinType)
-            #Using the WHERE to find the matches with all attributes
-            elif "WHERE" in inputUp:
-                searchItem = re.split("WHERE ", clInput, flags=re.IGNORECASE)[1]
-                counter = 0
-                if len(tables) == 1: #Typical where behavior
-                    data = tables[0].readlines()
-                    counter, output = where(searchItem, "select", data)
-                else: #Implicit inner join
-                    for table in tables:
-                        data = table.readlines()
-                        dataArray.append(data)
-                        counter += 1
-                    counter, output = joinWhere(searchItem, tableVariables, dataArray)
-#Printing
-            if "SELECT *" in inputUp:
-                #Checks if the output is allocated from WHERE
-                if not output == "":  
+                    mainCount, output = where(itemToFind,"select",data)
                     for line in output:
                         print line
-                #If there is no restriction from WHERE print all
-                else: 
-                    for table in tables:
-                        output += table.read()
-                    print output
-
-            #If doesnt want all attributes, trim down output
-            else:
-                arguments = re.split("SELECT", clInput, flags=re.IGNORECASE)[1]
-                attributes = re.split("FROM", arguments, flags=re.IGNORECASE)[0]
-                attributes = attributes.split(",")
-                if not output == "":  # Checks if the output is allocated
-                    lines = output
-                else:
-                    lines = table.readlines()
-                    data = lines
-                for line in lines:
-                    out = []
-                    for attribute in attributes:
-                        attribute = attribute.strip()
-                        colIndex = returnColIndex(data)
-                        if attribute in colIndex:
-                            separatedLine = splitLines(line)
-                            out.append(separatedLine[colIndex.index(attribute)].strip())
-                    print " | ".join(out)
-    #    print "!Failed to query table " + tableName + " because it does not exist"
+                if "SELECT *" in inputUp:
+                    if not output == "": #Checks if the output is allocated
+                        for line in output:
+                            print line
+                    else:
+                        output = table.read()
+                        print output
+                else: #If doesnt want all attributes, trim down output
+                    arguments = re.split("SELECT", input, flags=re.IGNORECASE)[1]
+                    attributes = re.split("FROM", arguments, flags=re.IGNORECASE)[0]
+                    attributes = attributes.split(",")
+                    if not output == "":  #This checks if the output is allocated
+                        lines = output
+                    else:
+                        lines = table.readlines()
+                        data = lines
+                    for line in lines:
+                        out = []
+                        for attribute in attributes:
+                            attribute = attribute.strip()
+                            colIndex = returnColIndex(data)
+                            if attribute in colIndex:
+                                splitLine = splitLines(line)
+                                out.append(splitLine[colIndex.index(attribute)].strip())
+                        print " | ".join(out)
+        else:
+            print "!Failed to query table " + tableName + " because it does not exist"
     except IndexError:
         print "!Failed to select because no table name is specified"
     except ValueError as err:
@@ -464,7 +443,6 @@ def joinOn(clInput,inputUp):
 
 def updateFrom(clInput):
     try:
-        print "DEBUG", clInput
         useEnabled()  #Check that a database is selected
         tableName = re.split("UPDATE ", clInput, flags=re.IGNORECASE)[1]  #Get string to use for the table name
         tableName = re.split("SET", tableName, flags=re.IGNORECASE)[0].lower().strip()
@@ -472,7 +450,6 @@ def updateFrom(clInput):
         if os.path.isfile(fileName):
             with open(fileName, "r+") as table:
                 data = table.readlines()
-                print data
                 update_item = re.split("WHERE ", clInput, flags=re.IGNORECASE)[1]
                 val = re.split("SET ", clInput, flags=re.IGNORECASE)[1]
                 val = re.split("WHERE ", val, flags=re.IGNORECASE)[0]
@@ -578,6 +555,8 @@ def selectHelper(fileNames, tableVariables, joinType, inputUp, clInput):
 def transaction(lockArray, lockFlag):
 
     try:
+        fileName = ""
+        files = []
         useEnabled()  #Check that a database is selected
 
         while True:
@@ -594,20 +573,21 @@ def transaction(lockArray, lockFlag):
 
             lockArray.append(inputString)
 
-        tableName = re.split("UPDATE ", lockArray[1], flags=re.IGNORECASE)[1]  #Get string to use for the table name
-        tableName = re.split("SET", tableName, flags=re.IGNORECASE)[0].lower().strip()
-        fileName = tableName + ".lock"
-        files = os.listdir("./locks")
-        lockArray[0] = fileName
+            if "UPDATE" in inputString.upper():
+                tableName = re.split("UPDATE ", lockArray[1], flags=re.IGNORECASE)[1]  #Get string to use for the table name
+                tableName = re.split("SET", tableName, flags=re.IGNORECASE)[0].lower().strip()
+                fileName = tableName + ".lock"
+                files = os.listdir("./locks")
+                lockArray[0] = fileName
+                print fileName
+                path = "./locks/" + fileName
+                f = open(path, "w")
+                f.close()
+                lockFlag = 1
 
         if fileName in files:
             print "Error: Table", tableName, "is locked!"
             return ["table"], 0
-        else:
-            path = "./locks/" + fileName
-            f = open(path, "w")
-            f.close()
-            lockFlag = 1
 
         return lockArray, lockFlag
 
@@ -615,10 +595,6 @@ def transaction(lockArray, lockFlag):
         print "!Something went wrong in 'transaction'"
     except ValueError as err:
         print err.args[0]
-
-def commitHelper(table):
-    lockFiles = os.listdir();
-    print lockFiles;
 
 if __name__ == '__main__':
     main()

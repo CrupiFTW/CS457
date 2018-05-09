@@ -6,3 +6,4 @@ insert into Flights values(23,1); -- seat 23 is occupied
 begin transaction;
 update flights set status = 1 where seat = 22;
 commit; --persist the change to disk
+select * from Flights;
