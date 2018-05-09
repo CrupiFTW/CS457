@@ -282,7 +282,7 @@ def transaction(lockArray, lockFlag):
                 fileName = tableName + ".lock"
                 files = os.listdir("./locks")
                 lockArray[0] = fileName
-                print fileName
+
                 path = "./locks/" + fileName
                 f = open(path, "w")
                 f.close()
@@ -298,9 +298,6 @@ def transaction(lockArray, lockFlag):
 
     except ValueError as err:
         print err.args[0]
-
-if __name__ == '__main__':
-    main()
 
 def createDatabase(clInput):
     try:
@@ -596,3 +593,7 @@ def selectHelper(fileNames, tableVariables, joinType, inputUp, clInput):
             fileNames.append(os.path.join(workingDirectory, tableName))
 
     return fileNames, tableVariables, joinType
+
+if __name__ == '__main__':
+    main()
+

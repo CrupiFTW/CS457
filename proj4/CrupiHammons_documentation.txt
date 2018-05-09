@@ -1,10 +1,10 @@
-CS 457 PA 3 DESIGN DOCUMENTATION
+CS 457 PA 4 DESIGN DOCUMENTATION
 
 PROGRAMMERS:
 Alex Crupi and Chase Hammons
 
 DATE:
-04-12-2018
+05-02-2018
 
 ORGANIZATION:
 We use folders as "databases" and files within them as "tables." Data is written to the files via creation and alteration. If table "x" is created in database "one," the file path will be "somepath/one/x"
@@ -18,7 +18,9 @@ If a command is not entered properly, it will omit that command and allow you to
 
 The script normalizes input by setting each command to uppercase when deciding which statement to enter to allow for flexibility with entering commands. For example, "insert into" and "INSERT INTO" both work. It also removes extraneous white space to ensure matches are consistent and reliable.
 
-The join works close to how you'd expeect. A new package had to be imported to handle multiple file openings. It opens the files and performs a typical join first. Once it has parsed that, it checks what kind of join you have selected. If it is a left outer join, it will get anything that was missing from the left and add that back in on the bottom. The same process is true for right and full outer joins.
+The join works close to how you'd expect. A new package had to be imported to handle multiple file openings. It opens the files and performs a typical join first. Once it has parsed that, it checks what kind of join you have selected. If it is a left outer join, it will get anything that was missing from the left and add that back in on the bottom. The same process is true for right and full outer joins.
+
+The locking functionality ensures no other transaction can modify the same table when it's being modified already. When a transaction begins, a lock is made for each command that tries to modify a different table. Once a commit happens on that instance, all changes are live in the files and the lock is removed. If another commit is attempted to a locked file, an error is thrown and the changes are not made.
 
 LIBRARIES:
 The script imports "OS" for modifying files within different selected paths. In addition, it imports "RE" to handle the case-insensitive nature of SQL. Finally, "contextmanager" is added to handle multiple file opening.
