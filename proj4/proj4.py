@@ -47,6 +47,9 @@ def main():
             elif "ALTER TABLE" in inputString:
                 alterTable(clInput)
 
+            elif "BEGIN TRANSACTION" in inputString:
+                lockArray, lockFlag = transaction(lockArray, lockFlag)
+
             elif "CREATE DATABASE" in inputString:
                 createDatabase(clInput)
 
@@ -73,9 +76,6 @@ def main():
 
             elif "USE" in inputString:
                 useDatabase(clInput)
-
-            elif "BEGIN TRANSACTION" in inputString:
-                lockArray, lockFlag = transaction(lockArray, lockFlag)
 
             elif ".EXIT" in clInput:  #Exit database if specified before EOF
                 print "All done."
@@ -256,6 +256,51 @@ def alterTable(clInput):
         print "!Failed to alter Table because no table name is specified"
     except ValueError as err:
         print err.args[0]
+
+def transaction(lockArray, lockFlag):
+    try:
+        fileName = ""
+        files = []
+        useEnabled()  # Check that there is a database is selected
+
+        while True:
+            clInput = ""
+
+            while not ";" in clInput and not "--" in clInput:
+                clInput += raw_input("\n enter a command \n").strip('\r')  # Read the clInput command from terminal
+
+            if "commit;" in clInput:
+                break
+
+            clInput = clInput.split(";")[0]  # Remove ; from the clInput command
+            inputString = str(clInput)  # Normalize the clInput command
+            lockArray.append(inputString)
+
+            if "UPDATE" in inputString.upper():
+                tableName = re.split("UPDATE ", lockArray[1], flags=re.IGNORECASE)[1]  # Get an updated string to use for the table name
+                tableName = re.split("SET", tableName, flags=re.IGNORECASE)[0].lower().strip()
+                fileName = tableName + ".lock"
+                files = os.listdir("./locks")
+                lockArray[0] = fileName
+                print fileName
+                path = "./locks/" + fileName
+                f = open(path, "w")
+                f.close()
+                lockFlag = 1
+
+        if fileName in files:
+            print "Error: Table", tableName, "is locked!" # Print Error
+            return ["table"], 0
+        return lockArray, lockFlag
+
+    except IndexError:
+        print "!Something went wrong in 'transaction'"
+
+    except ValueError as err:
+        print err.args[0]
+
+if __name__ == '__main__':
+    main()
 
 def createDatabase(clInput):
     try:
@@ -551,51 +596,3 @@ def selectHelper(fileNames, tableVariables, joinType, inputUp, clInput):
             fileNames.append(os.path.join(workingDirectory, tableName))
 
     return fileNames, tableVariables, joinType
-
-def transaction(lockArray, lockFlag):
-
-    try:
-        fileName = ""
-        files = []
-        useEnabled()  #Check that a database is selected
-
-        while True:
-            clInput = ""
-
-            while not ";" in clInput and not "--" in clInput:
-                clInput += raw_input("\n enter a command \n").strip('\r')  #Read clInput command from terminal
-
-            if "commit;" in clInput:
-                break
-
-            clInput = clInput.split(";")[0]  #Remove ; from the clInput command
-            inputString = str(clInput)  #Normalize the clInput command
-
-            lockArray.append(inputString)
-
-            if "UPDATE" in inputString.upper():
-                tableName = re.split("UPDATE ", lockArray[1], flags=re.IGNORECASE)[1]  #Get string to use for the table name
-                tableName = re.split("SET", tableName, flags=re.IGNORECASE)[0].lower().strip()
-                fileName = tableName + ".lock"
-                files = os.listdir("./locks")
-                lockArray[0] = fileName
-                print fileName
-                path = "./locks/" + fileName
-                f = open(path, "w")
-                f.close()
-                lockFlag = 1
-
-        if fileName in files:
-            print "Error: Table", tableName, "is locked!"
-            return ["table"], 0
-
-        return lockArray, lockFlag
-
-    except IndexError:
-        print "!Something went wrong in 'transaction'"
-    except ValueError as err:
-        print err.args[0]
-
-if __name__ == '__main__':
-    main()
-
